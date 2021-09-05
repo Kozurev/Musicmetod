@@ -29,6 +29,10 @@ if (!is_null(Core_Array::Post('do_auth', null, PARAM_STRING))) {
 
         if (User_Auth::authByLogPass($login, $password, $rememberMe)){
             $User = User_Auth::current();
+            if (!$User->isManagementStaff()) {
+                User_Auth::logout();
+                Core_Page_Show::instance()->error(403);
+            }
             if (!is_null($back)) {
                 $backUrl = $back;
             } elseif ($User->groupId() == ROLE_TEACHER) {

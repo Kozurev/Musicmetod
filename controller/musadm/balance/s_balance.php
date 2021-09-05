@@ -8,6 +8,10 @@
 
 authOrOut();
 
+if (!User_Auth::parentAuth()->isManagementStaff()) {
+    Core_Page_Show::instance()->error(403);
+}
+
 $breadcumbs[0] = new stdClass();
 $breadcumbs[0]->title = Core_Page_Show::instance()->Structure->getParent()->title();
 $breadcumbs[0]->active = 1;

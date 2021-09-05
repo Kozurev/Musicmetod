@@ -10,27 +10,12 @@
 
 authOrOut();
 
-
-
-//$host  = Core_Array::Server('HTTP_HOST', '', PARAM_STRING);
-//$uri   = rtrim(dirname(Core_Array::Server('PHP_SELF', '', PARAM_STRING)), '/\\');
+if (!User_Auth::current()->isManagementStaff()) {
+    Core_Page_Show::instance()->error(403);
+}
 
 Core_Page_Show::instance()->setParam('body-class', 'body-green');
 Core_Page_Show::instance()->setParam('title-first', 'НОВОСТИ');
-// Core_Page_Show::instance()->setParam('title-second', 'СТРАНИЦА');
-
-//if (Core_Array::Get('ajax', null, PARAM_STRING) === null) {
-//    if ($User->groupId() == ROLE_DIRECTOR) {
-//        header("Location: http://$host$uri/user/client");
-//    }
-//    if ($User->groupId() == ROLE_CLIENT) {
-//        header("Location: http://$host$uri/balance");
-//    }
-//    if ($User->groupId() == ROLE_TEACHER) {
-//        header("Location: http://$host$uri/lk");
-//    }
-//}
-
 
 $action = Core_Array::Get('action', null, PARAM_STRING);
 
