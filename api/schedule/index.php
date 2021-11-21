@@ -517,7 +517,9 @@ if ($action === 'getTeacherNearestTime') {
 
     $teacherId = Core_Array::Get('teacherId', 0, PARAM_INT);
     $date = Core_Array::Get('date', '', PARAM_DATE);
-    $lessonDuration = Core_Array::Get('lessonDuration', '00:50:00', PARAM_TIME);
+    $userDefaultLessonDurationMinutes = User_Auth::current()->getLessonTime();
+    $userDefaultLessonDurationString = \Carbon\Carbon::create()->setMinutes($userDefaultLessonDurationMinutes)->format('H:i:s');
+    $lessonDuration = Core_Array::Get('lessonDuration', $userDefaultLessonDurationString, PARAM_TIME);
     if (is_numeric($lessonDuration)) {
         $lessonDuration = toTime(intval($lessonDuration) * 60);
     }

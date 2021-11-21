@@ -426,4 +426,16 @@ class User extends User_Model
     {
         return self::getGroupNameById($this->groupId());
     }
+
+    /**
+     * @return int
+     */
+    public function getLessonTime(): int
+    {
+        $minutesValue = Property_Controller::factoryByTag('lesson_time')
+            ->getValues($this)[0];
+        return !empty($minutesValue->getId())
+            ?   (int)$minutesValue->value()
+            :   SCHEDULE_DEFAULT_LESSON_DURATION;
+    }
 }
