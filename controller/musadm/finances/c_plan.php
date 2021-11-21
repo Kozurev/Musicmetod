@@ -8,6 +8,7 @@ $director = $user->getDirector();
 //Сбор общих данных по планам
 $areas = (new Schedule_Area_Assignment($user))->getAreas();
 $paymentTypes = Payment_Type::query()
+    ->where('is_in_targets', '=', 1)
     ->where('subordinated', '=', $director->getId())
     ->findAll();
 
@@ -37,9 +38,15 @@ $expenses = (new Orm)
     ->groupBy('pt.id')
     ->get();
 
-$paymentTypes = array_map(function(Payment_Type $type) use ($expenses, $targets) {
+//Подсчет общего кол-ва
+$total = new stdClass();
+$total->expenses = 0;
+$total->target = 0;
+$paymentTypes = array_map(function(Payment_Type $type) use ($expenses, $targets, $total) {
     $type->expenses = (int)($expenses->where('type_id', $type->getId())->first()->amount ?? 0);
     $type->target = (int)($targets->where('payment_type', $type->getId())->first()->target ?? 0);
+    $total->expenses += $type->expenses;
+    $total->target += $type->target;
     return $type;
 }, $paymentTypes);
 
@@ -51,5 +58,6 @@ global $CFG;
     ->addSimpleEntity('year', $year)
     ->addSimpleEntity('area_id', $areaId)
     ->addSimpleEntity('wwwroot', $CFG->wwwroot)
+    ->addEntity($total, 'total')
     ->xsl('musadm/statistic_targets/index.xsl')
     ->show();

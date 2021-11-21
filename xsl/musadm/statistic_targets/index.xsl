@@ -144,8 +144,8 @@
                     <table class="table table-stripped">
                         <tr>
                             <th class="text-right">Тип расходов</th>
-                            <td class="text-center">Расходы</td>
-                            <th>Цель</th>
+                            <th class="text-center">Расходы<br/>(<span><xsl:value-of select="total/expenses" /></span>)</th>
+                            <th>Цель<br/>(<span id="expensesTargetSpan"><xsl:value-of select="total/target" /></span>)</th>
                             <th>Действие</th>
                         </tr>
                         <xsl:apply-templates select="payment_type" />

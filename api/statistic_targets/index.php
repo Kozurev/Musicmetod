@@ -33,8 +33,14 @@ if ($action === 'set') {
         ]));
     }
 
+    $total = Statistic_Payment_Target::query()
+        ->where('month', '=', $month)
+        ->where('year', '=', $year)
+        ->sum('target');
+
     exit(json_encode([
         'status' => 'success',
-        'message' => 'Настройка успешно сохранена'
+        'message' => 'Настройка успешно сохранена',
+        'total' => $total
     ]));
 }

@@ -1,4 +1,7 @@
-initAjaxForm('#creditTargetAjaxForm');
+initAjaxForm('#creditTargetAjaxForm', function(response) {
+    ajaxFormSuccessCallbackDefault(response);
+    $('#expensesTargetSpan').text(response.total);
+});
 
 $(document)
     .on('click', '.targetSave', function(e) {
