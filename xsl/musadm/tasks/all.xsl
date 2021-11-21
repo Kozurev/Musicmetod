@@ -79,7 +79,7 @@
                         </xsl:otherwise>
                     </xsl:choose>
 
-                    <span>Всего: <xsl:value-of select="count(//task)" /></span>
+                    <span>Незавершенные задачи/всего: <xsl:value-of select="count(//task[done_date=''])" />/<xsl:value-of select="count(//task)" /></span>
                 </div>
             </xsl:if>
         </section>
