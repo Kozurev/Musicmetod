@@ -132,7 +132,7 @@
 
     <xsl:template match="post">
         <div class="col-md-12">
-            <div class="item item-orange">
+            <div class="item item-orange post">
                 <div class="item-inner">
                     <div class="row">
                         <div class="col-sm-8 col-xs-12">
@@ -143,12 +143,12 @@
                             </h3>
                         </div>
                         <div class="col-sm-4 col-xs-12 text-right">
-                            <span><xsl:value-of select="author_name" /></span>
+                            <span class="post_author_name"><xsl:value-of select="author_name" /></span>
                             <span><xsl:text> </xsl:text></span>
-                            <span><xsl:value-of select="refactored_date" /></span>
+                            <span class="post_date"><xsl:value-of select="refactored_date" /></span>
                         </div>
                         <div class="col-md-12">
-                            <xsl:value-of disable-output-escaping="yes" select="content" />
+                            <span class="post_content"><xsl:value-of disable-output-escaping="yes" select="content" /></span>
                         </div>
                     </div>
                 </div>

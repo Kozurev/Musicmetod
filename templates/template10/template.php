@@ -51,6 +51,7 @@
         ->css('/templates/template10/assets/css/lids.css')
         ->css('/templates/template10/assets/css/finances.css')
         ->css('/templates/template10/assets/css/tasks.css')
+        ->css('/templates/template10/assets/css/posts.css')
         ->css('/templates/template10/assets/css/checkbox.css')
         ->css('/templates/template10/assets/css/tooltip.css')
         ->css('/templates/template10/assets/css/scroll.css')
