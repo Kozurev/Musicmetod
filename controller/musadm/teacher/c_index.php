@@ -428,6 +428,20 @@ if ($accessPaymentConfig) {
         ->show();
 }
 
+//Блок с комментами
+$comments = collect(Comment::getAll($User));
+$comments = $comments->map(function(Comment $comment) {
+    $comment->refactored_date = refactorDateTimeFormat($comment->datetime());
+    return $comment;
+})->toArray();
+(new Core_Entity)
+    ->addEntity($User, 'user')
+    ->addEntities($comments)
+    ->addSimpleEntity('access_user_append_comment', (int)Core_Access::instance()->hasCapability(Core_Access::USER_APPEND_COMMENT))
+    ->xsl('musadm/users/comments.xsl')
+    ->show();
+
+//Расписание работы преподавателя
 if (Core_Access::instance()->hasCapability(Core_Access::TEACHER_SCHEDULE_TIME_READ) ||
     Core_Access::instance()->hasCapability(Core_Access::TEACHER_CLIENTS_READ)) {
     //График работы преподавателя

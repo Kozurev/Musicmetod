@@ -198,6 +198,16 @@ $(function(){
                 User.saveComment(userId, {text: commentText}, refreshUserTable);
             }
         })
+        //Сохранение комментария к преподавателю
+        .on('click', '#user_teacher_comment_save', function(e) {
+            e.preventDefault();
+            let commentText = $('#user_comment').val(),
+                userId = $(this).data('userid');
+            if (commentText != '') {
+                loaderOn();
+                User.saveComment(userId, {text: commentText}, refreshSchedule);
+            }
+        })
         .on('click', '#get_lid_data', function(e) {
             e.preventDefault();
             var lidId = $("#lid_id").val();

@@ -988,3 +988,24 @@ Core::attachObserver('after.ScheduleLesson.insert', function(array $args) {
         }
     }
 });
+
+/**
+ * При добавлении комментария к преподу необходимо создать пост с тем же сообщением
+ */
+Core::attachObserver('after.UserCommentAssignment.insert', function(array $args) {
+    /** @var User_Comment_Assignment $comment */
+    $assignment = $args[0];
+    $user = User::find($assignment->objectId());
+    if ($user instanceof User && $user->isTeacher()) {
+        /** @var Comment|null $comment */
+        $comment = Comment::find($assignment->commentId());
+        if (!is_null($comment)) {
+            $post = new Post();
+            $post->title = 'Преподаватель ' . $user->getFio();
+            $post->content = $comment->text();
+            $post->author_id = $comment->authorId();
+            $post->author_name = $comment->authorFullname();
+            $post->save();
+        }
+    }
+});
