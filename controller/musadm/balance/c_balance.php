@@ -276,16 +276,20 @@ if (Core_Access::instance()->hasCapability(Core_Access::PAYMENT_READ_CLIENT)) {
 //Новый раздел со списком событий
 if ($isAdmin === 1) {
     //Считаем кол-во дней жизни за вычетом отвала
-    $allDays = (strtotime(date('Y-m-d')) - strtotime($user->registerDate())) / (60*60*24);
+    $dateEnd = date('Y-m-d');
     $absenceDays = 0;
     $userActivityList = User_Activity::query()
         ->where('user_id', '=', $user->id())
         ->findAll();
     foreach ($userActivityList as $userActivity) {
-        $absenceDays += strtotime($userActivity->dumpDateEnd()) - strtotime($userActivity->dumpDateStart());
+        if (!is_null($userActivity->dumpDateEnd())) {
+            $absenceDays += strtotime($userActivity->dumpDateEnd()) - strtotime($userActivity->dumpDateStart());
+        } else {
+            $dateEnd = $userActivity->dumpDateStart();
+        }
     }
-    $absenceDays = intval($absenceDays / (60*60*24));
-    $lifeDays = $allDays - $absenceDays;
+    $lifeDaysSeconds = strtotime($dateEnd) - strtotime($user->registerDate()) - $absenceDays;
+    $lifeDays = intval($lifeDaysSeconds / (60*60*24));
 
     //Считаем кол-во уроков , которые отходил
     $countLessons = 0;
