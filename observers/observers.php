@@ -272,7 +272,7 @@ Core::attachObserver('after.ScheduleLesson.makeReport', function($args) {
     $commentText .= date('d.m.Y', strtotime($report->date()));
     $lesson = Core::factory('Schedule_Lesson', $report->lessonId());
     $commentText .= ' в ' . refactorTimeFormat($lesson->timeFrom()) . ' ' . refactorTimeFormat($lesson->timeTo());
-    $commentTextAttendance = $commentText . ' состоялась';
+    $commentTextAttendance = $commentText . ' состаялась';
     $commentTextAbsent = $commentText . ' не состаялась';
 
     $lessonClient = $lesson->getClient();
