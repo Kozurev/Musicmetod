@@ -15,3 +15,4 @@ $stdModels = $models->map(function(Model $checkoutModel) : stdClass {
     ->addEntities(Helper::getCheckoutTypesListStd(), 'types')
     ->xsl('musadm/integration/checkouts/index.xsl')
     ->show();
+//for test
