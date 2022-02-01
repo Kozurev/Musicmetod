@@ -7,7 +7,7 @@
  */
 
 
-use Model\Checkout;
+use Model\Checkout\Checkout;
 
 $orderId = Core_Array::Get('orderId', null, PARAM_STRING);
 
