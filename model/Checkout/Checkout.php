@@ -1,11 +1,10 @@
 <?php
 
 
-namespace Model;
+namespace Model\Checkout;
 
 use Model\Checkout\Facades\A_Facade;
 use Model\Checkout\Facades\InitPro;
-use Model\Checkout\Model;
 
 /**
  * Class Checkout
@@ -38,7 +37,7 @@ class Checkout
         if (!is_null($instance)) {
             $this->instance = $instance;
         } else {
-            throw new \Exception('Undefined checkout model type');
+            throw new \Exception('Undefined Checkout model type');
         }
     }
 

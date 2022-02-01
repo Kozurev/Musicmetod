@@ -3,8 +3,6 @@
 
 namespace Model\Checkout;
 
-use Model\Checkout;
-
 class Helper
 {
     /**
