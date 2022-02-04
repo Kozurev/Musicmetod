@@ -6,7 +6,7 @@
  * Time: 13:27
  */
 
-use Model\Checkout;
+use Model\Checkout\Checkout;
 use Model\Checkout\Model;
 
 $action = Core_Array::Request('action', null, PARAM_STRING);

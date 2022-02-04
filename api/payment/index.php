@@ -381,7 +381,7 @@ if ($action === 'registerOrder') {
 
     //Проверка на наличие кассы для филиалов пользователя
     try {
-        if (!\Model\Checkout::hasCheckout($user)) {
+        if (!\Model\Checkout\Checkout::hasCheckout($user)) {
             throw new Exception('Для вашего филиала отсутствует прием платежей онлайн');
         }
     } catch (\Throwable $throwable) {

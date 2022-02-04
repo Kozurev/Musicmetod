@@ -1,6 +1,6 @@
 <?php
 
-use Model\Checkout;
+use Model\Checkout\Checkout;
 use Model\Checkout\Model;
 
 global $CFG;
