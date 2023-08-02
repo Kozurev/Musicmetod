@@ -103,6 +103,10 @@ class Core_Recaptcha
      */
     public function checkRequest(): bool
     {
+        global $CFG;
+        if (empty($CFG->recaptcha->publicKey)) {
+            return true;
+        }
         $recaptchaRequest = Core_Array::Request('g-recaptcha-response', null, PARAM_STRING);
         return $this->isValid($recaptchaRequest);
     }
