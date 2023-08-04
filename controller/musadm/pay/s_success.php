@@ -19,7 +19,7 @@ if (!is_null($orderId)) {
     $payment = Payment::query()
         ->where('id', '=', $orderId)
         ->where('status', '=', Payment::STATUS_PENDING)
-        ->where('user', '=', User_Auth::current()->getId())
+        // ->where('user', '=', User_Auth::current()->getId())
         ->find();
     if (!is_null($payment)) {
         $payment->merchantOrderId($transactionId);
@@ -42,6 +42,7 @@ if (!is_null($orderId)) {
         } catch (Exception $e) {
             Log::instance()->error(Log::TYPE_CHECKOUT, $e->getMessage());
             http_response_code(500);
+            dd($e->getMessage());
         }
 
 //        if (!empty($orderData->successUrl ?? '')) {
@@ -51,5 +52,3 @@ if (!is_null($orderId)) {
     }
     // }
 }
-
-Log::instance()->debug('payment', json_encode($_REQUEST));
