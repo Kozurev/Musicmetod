@@ -53,3 +53,7 @@ $CFG->credits->tinkoff = new stdClass();
 $CFG->credits->tinkoff->shop_id = '';
 $CFG->credits->tinkoff->password = '';
 $CFG->credits->tinkoff->showcase_id = '';
+
+$CFG->payonline = new stdClass();
+$CFG->payonline->merchant_id = '';
+$CFG->payonline->secret_token = '';

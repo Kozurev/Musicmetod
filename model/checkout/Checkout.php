@@ -1,11 +1,10 @@
 <?php
 
 
-namespace Model;
+namespace Model\Checkout;
 
 use Model\Checkout\Facades\A_Facade;
 use Model\Checkout\Facades\InitPro;
-use Model\Checkout\Model;
 
 /**
  * Class Checkout

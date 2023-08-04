@@ -4,6 +4,9 @@
  * @date 19.06.2019 23:04
  */
 
+use Model\Checkout\Checkout;
+use Model\Payonline;
+
 foreach ($_GET as $key => $param) {
     if (substr($key, 0, 4) == 'amp;') {
         $_GET[substr($key, 4)] = $param;
@@ -381,7 +384,7 @@ if ($action === 'registerOrder') {
 
     //Проверка на наличие кассы для филиалов пользователя
     try {
-        if (!\Model\Checkout::hasCheckout($user)) {
+        if (!Checkout::hasCheckout($user)) {
             throw new Exception('Для вашего филиала отсутствует прием платежей онлайн');
         }
     } catch (\Throwable $throwable) {
@@ -398,34 +401,53 @@ if ($action === 'registerOrder') {
     $payment->status(Payment::STATUS_PENDING);
     $payment->save();
 
-    $sberbak = Sberbank::instance();
-    $sberbak->setAmount($amount);
-    $sberbak->setUserId($userId);
-    $sberbak->setDescription($description);
-    $sberbak->setOrderNumber($payment->getId());
-    $response = $sberbak->registerOrder();
+    $payOnline = Payonline::instance($payment->getId(), $payment->value());
+    $payOnline->setDescription($payment->description());
+    $payOnline->setSuccessUrl(Core_Array::Request('successUrl', '', PARAM_STRING));
+    $payOnline->setFailUrl(Core_Array::Request('errorUrl', '', PARAM_STRING));
+    $paymentLink = $payOnline->getPaymentLink();
 
-    if (empty($response->errorCode ?? null)) {
-        $payment->merchantOrderId($response->orderId ?? null);
-        $payment->save();
-        $tmpData = [
-            'successUrl' => Core_Array::Request('successUrl', '', PARAM_STRING),
-            'errorUrl' => Core_Array::Request('errorUrl', '', PARAM_STRING)
-        ];
-    } else {
-        $payment->setStatusError();
-        $payment->appendComment('Ошибка платежного шлюза: '. ($response->errorMessage ?? 'Неизвестная ошибка'));
-        $tmpData = [
-            'successUrl' => Core_Array::Request('successUrl', '', PARAM_STRING),
-            'errorUrl' => Core_Array::Request('errorUrl', '',PARAM_STRING)
-        ];
-    }
+    //$payment->merchantOrderId($response->orderId ?? null);
+    //$payment->save();
+//    $tmpData = [
+//        'successUrl' => Core_Array::Request('successUrl', '', PARAM_STRING),
+//        'errorUrl' => Core_Array::Request('errorUrl', '', PARAM_STRING)
+//    ];
+//    Temp::put($payment->getId(), $tmpData);
 
-    if (!empty($response->orderId)) {
-        Temp::put($response->orderId, $tmpData);
-    }
+    exit(json_encode([
+        'formUrl' => $paymentLink
+    ]));
 
-    exit(json_encode($response));
+
+//    $sberbak = Sberbank::instance();
+//    $sberbak->setAmount($amount);
+//    $sberbak->setUserId($userId);
+//    $sberbak->setDescription($description);
+//    $sberbak->setOrderNumber($payment->getId());
+//    $response = $sberbak->registerOrder();
+
+//    if (empty($response->errorCode ?? null)) {
+//        $payment->merchantOrderId($response->orderId ?? null);
+//        $payment->save();
+//        $tmpData = [
+//            'successUrl' => Core_Array::Request('successUrl', '', PARAM_STRING),
+//            'errorUrl' => Core_Array::Request('errorUrl', '', PARAM_STRING)
+//        ];
+//    } else {
+//        $payment->setStatusError();
+//        $payment->appendComment('Ошибка платежного шлюза: '. ($response->errorMessage ?? 'Неизвестная ошибка'));
+//        $tmpData = [
+//            'successUrl' => Core_Array::Request('successUrl', '', PARAM_STRING),
+//            'errorUrl' => Core_Array::Request('errorUrl', '',PARAM_STRING)
+//        ];
+//    }
+
+//    if (!empty($response->orderId)) {
+//        Temp::put($response->orderId, $tmpData);
+//    }
+//
+//    exit(json_encode($response));
 }
 
 /**
