@@ -21,7 +21,9 @@
                     <h5 class="text-center">Комментариев не найдено</h5>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:apply-templates select="comment" />
+                    <div class="teacher-comments">
+                        <xsl:apply-templates select="comment" />
+                    </div>
                 </xsl:otherwise>
             </xsl:choose>
             <xsl:apply-templates select="event" />

@@ -630,6 +630,10 @@ ul {
  * << Выпадающее меню
  */
 
+.user-comments .teacher-comments {
+    max-height: 500px;
+    overflow-y: scroll;
+}
 
 
 @media (min-width: 1200px) {
