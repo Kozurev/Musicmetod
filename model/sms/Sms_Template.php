@@ -15,7 +15,7 @@ class Sms_Template
      * @var array|string[]
      */
     protected static array $messages = [
-        self::TAG_LIDS_BEFORE_CONSULT_DAY => 'Приветствуем, завтра ждём к нам на открытый урок по музыке, как и договаривались. Если вдруг накладки - сообщите, ведь мы специально забронировали за вами время)',
+        self::TAG_LIDS_BEFORE_CONSULT_DAY => 'Завтра в школу музыки, всё по плану) Накладки? Сообщите 89092012550',
         self::TAG_LIDS_BEFORE_CONSULT_HOUR => 'До встречи в школе музыки осталось совсем чуть-чуть, контрольное напоминание;)'
     ];
 
