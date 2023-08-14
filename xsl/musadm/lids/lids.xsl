@@ -92,7 +92,7 @@
                         </xsl:if>
 
                         <div>
-                            <span>Количество надйенных лидов: </span><xsl:value-of select="countLids" />
+                            <span>Количество надйеных лидов: </span><xsl:value-of select="countLids" />
                         </div>
                     </div>
                 </form>
