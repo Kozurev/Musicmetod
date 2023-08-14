@@ -137,12 +137,37 @@ class Task extends Task_Model
     {
         $task = Task_Controller::factory()
             ->associate($client->getId())
-            ->priorityId(2)
+            ->priorityId(self::PRIORITY_MEDIUM)
             ->date($date)
             ->save();
 
         $text = $client->getFio() . ', отсутствовал. Уточнить насчет дальнейшего графика.';
         $task->addNote($text);
+    }
+
+    /**
+     * Создание задачи для каждого нового клиента
+     *
+     * @param User $client
+     * @param string|null $date
+     * @return void
+     */
+    public static function addClientChecklistTask(User $client, string $date = null): void
+    {
+        if (!$date) {
+            $date = date('Y-m-d');
+        }
+
+        $task = Task_Controller::factory()
+            ->associate($client->getId())
+            ->priorityId(self::PRIORITY_MEDIUM)
+            ->date($date)
+            ->save();
+
+        if (!is_null($task)) {
+            $text = $client->getFio() . ', проверить чек-лист: выставлен ли график, начислена премия преподавателю, выставлен график платежей';
+            $task->addNote($text);
+        }
     }
 
     /**

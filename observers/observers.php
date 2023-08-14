@@ -272,8 +272,8 @@ Core::attachObserver('after.ScheduleLesson.makeReport', function($args) {
     $commentText .= date('d.m.Y', strtotime($report->date()));
     $lesson = Core::factory('Schedule_Lesson', $report->lessonId());
     $commentText .= ' в ' . refactorTimeFormat($lesson->timeFrom()) . ' ' . refactorTimeFormat($lesson->timeTo());
-    $commentTextAttendance = $commentText . ' состаялась';
-    $commentTextAbsent = $commentText . ' не состаялась';
+    $commentTextAttendance = $commentText . ' состоялась';
+    $commentTextAbsent = $commentText . ' не состоялась';
 
     $lessonClient = $lesson->getClient();
     if ($report->typeId() == Schedule_Lesson::TYPE_CONSULT) {
@@ -1008,4 +1008,17 @@ Core::attachObserver('after.UserCommentAssignment.insert', function(array $args)
             $post->save();
         }
     }
+});
+
+/**
+ * Созданиее задачи при регистрации нового клиента с напоминанием менеджеру пройтись по чеклисту
+ */
+Core::attachObserver('after.User.insert', function(array $args) {
+    /** @var User|null $user */
+    $user = $args[0] ?? null;
+    if (!$user->isClient()) {
+        return;
+    }
+
+    Task::addClientChecklistTask($user);
 });
