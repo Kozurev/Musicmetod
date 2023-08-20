@@ -88,7 +88,7 @@
         <tr>
             <td><xsl:value-of select="title" /></td>
             <td>
-                <xsl:value-of select="count" /> (<xsl:value-of select="percents" />%)
+                <xsl:value-of select="count" />
             </td>
         </tr>
     </xsl:template>
@@ -97,7 +97,7 @@
         <tr>
             <td><xsl:value-of select="title" /></td>
             <td>
-                <xsl:value-of select="countSchedule" /> (<xsl:value-of select="percentsSchedule" />%)
+                <xsl:value-of select="countSchedule" />
             </td>
         </tr>
     </xsl:template>
@@ -106,7 +106,7 @@
         <tr>
             <td><xsl:value-of select="title" /></td>
             <td>
-                <xsl:value-of select="countDateControl" /> (<xsl:value-of select="percentsDateControl" />%)
+                <xsl:value-of select="countDateControl" />
             </td>
         </tr>
     </xsl:template>

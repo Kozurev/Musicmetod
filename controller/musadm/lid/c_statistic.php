@@ -138,37 +138,37 @@ if (count($statuses) > 0) {
         $countWithStatus = clone $countQuery;
         $countWithStatusFromSchedule = clone $countFromScheduleQuery;
         $countWithStatusFromDateControl = (new Lid())->queryBuilder()
-              ->whereIn('Lid.id',$lidsDateControl);
+            ->whereIn('Lid.id', $lidsDateControl);
 
-        $count = $countWithStatus
-            ->where('status_id', '=', $status->getId())
-            ->getCount();
+        // Костыль для конкретного директора дабы считать колонку "Был на консультации" как сумму "Был на консультации" и "Записался"
+        if (User_Auth::current()->subordinated() === 516 && $status->getId() === 3) {
+            $count = $countWithStatus
+                ->whereIn('status_id', [3, 4])
+                ->getCount();
+            $countFromSchedule = $countWithStatusFromSchedule
+                ->whereIn('status_id', [3, 4])
+                ->getCount();
+            $countFromDateControl = $totalCountFromDateControl !== 0
+                ?  $countWithStatusFromDateControl->whereIn('status_id', [3, 4])->getCount()
+                :  0;
+        } else {
+            $count = $countWithStatus
+                ->where('status_id', '=', $status->getId())
+                ->getCount();
+            $countFromSchedule = $countWithStatusFromSchedule
+                ->where('status_id', '=', $status->getId())
+                ->getCount();
+            $countFromDateControl = $totalCountFromDateControl !== 0
+                ?  $countWithStatusFromDateControl->where('status_id', '=', $status->getId())->getCount()
+                :  0;
+        }
 
-        $countFromSchedule = $countWithStatusFromSchedule
-            ->where('status_id', '=', $status->getId())
-            ->getCount();
-
-        $countFromDateControl = $totalCountFromDateControl !== 0
-            ?  $countWithStatusFromDateControl->where('status_id', '=', $status->getId())->getCount()
-            :  0;
-        $percents = $totalCount !== 0
-            ?   round($count * 100 / $totalCount, 1)
-            :   0;
-        $percentsFromSchedule = $totalCountFromSchedule !== 0
-            ?   round($countFromSchedule * 100 / $totalCountFromSchedule, 1)
-            :   0;
-        $percentsFromComment = $totalCountFromDateControl !== 0
-            ?   round($countFromDateControl * 100 / $totalCountFromDateControl, 1)
-            :   0;
         $outputStatus = clone $statuses[$key];
         $outputStatus->addSimpleEntity('count', $count);
-        $outputStatus->addSimpleEntity('percents', round($percents, 2));
         $outputStatusSchedule = clone $statuses[$key];
         $outputStatusSchedule->addSimpleEntity('countSchedule', $countFromSchedule);
-        $outputStatusSchedule->addSimpleEntity('percentsSchedule', round($percentsFromSchedule, 2));
         $outputStatusDateControl = clone $statuses[$key];
         $outputStatusDateControl->addSimpleEntity('countDateControl', $countFromDateControl);
-        $outputStatusDateControl->addSimpleEntity('percentsDateControl', round($percentsFromComment, 2));
         $lidsOutput->addEntity($outputStatus, 'status');
         $lidsOutput->addEntity($outputStatusSchedule, 'statusSchedule');
         $lidsOutput->addEntity($outputStatusDateControl, 'statusDateControl');
