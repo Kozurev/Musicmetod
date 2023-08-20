@@ -132,6 +132,7 @@ if ($action === 'buyForClient' || $action === 'buy_tariff') {
 
     $response = ['user' => $client->toStd()];
     $response['user']->balance = $client->getBalance()->toStd();
+    $response['tarif'] = $tariff->toStd();
     die(json_encode($response));
 }
 
