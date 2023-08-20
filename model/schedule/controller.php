@@ -282,7 +282,6 @@ class Schedule_Controller
             if ($dayName == 'Monday') {
                 echo '<tr>';
             }
-            // echo '<td style="'.($date == $today ? 'background-color: #75c181' : '').'">';
             echo '<td>';
             echo "<span class='date'>" . refactorDateFormat($date, '.', 'short') . "</span>";
 
@@ -326,7 +325,7 @@ class Schedule_Controller
                                 <a href="#"></a>
                                 <ul class="dropdown" data-date="'.$date.'" 
                                         data-id="'.$lesson->getId().'" data-type="'.$lesson->typeId().'">
-                                    <li><a href="#" class="schedule_today_absent">Отсутствует сегодня</a></li>
+                                    <li><a href="#" class="schedule_today_absent" data-page_type="client">Отсутствует сегодня</a></li>
                                 </ul>
                             </li>
                         </ul>';

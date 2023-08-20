@@ -244,12 +244,13 @@ $(function(){
             let lessonId = $(this).parent().parent().data('id');
             let clientId = $(this).parent().parent().data('client');
             let date = $(this).parent().parent().data('date');
+            let pageType = $(this).data('page_type');
             markAbsent(lessonId, clientId, date, function(response) {
                 if (response.error !== undefined) {
                     notificationError(response.message);
                     loaderOff();
                 } else {
-                    refreshSchedule();
+                    refreshSchedule(pageType);
                 }
             });
         })
@@ -735,10 +736,20 @@ function saveScheduleTask(formData, func) {
     });
 }
 
-
-function refreshSchedule() {
-    $('.schedule_calendar').trigger('change');
-    $('#month').trigger('change');
+function refreshSchedule(pageType) {
+    if (pageType == 'client') {
+        $.ajax({
+            type: 'GET',
+            url: window.location.href + '&ajax=1',
+            dataType: 'html',
+            success: function(response) {
+                $('.page').html(response);
+                loaderOff();
+            }
+        });
+    } else {
+        $('.schedule_calendar').trigger('change');
+    }
 }
 
 function getSchedule(userId, date, func) {
