@@ -77,6 +77,7 @@ return array (
   26269302 => 'SFR',
   26269303 => 'SFR',
   26269304 => 'SFR',
+  26269305 => 'ZEOP Mobile',
   26269306 => 'Orange',
   26269310 => 'SFR',
   26269311 => 'Orange',
@@ -101,6 +102,7 @@ return array (
   26269362 => 'ZEOP Mobile',
   26269363 => 'ZEOP Mobile',
   26269364 => 'ZEOP Mobile',
+  26269365 => 'ZEOP Mobile',
   26269366 => 'Orange',
   26269370 => 'Only',
   26269371 => 'Only',
@@ -118,5 +120,4 @@ return array (
   26269394 => 'SFR',
   26269397 => 'SFR',
   26269399 => 'Orange',
-  2629 => 'Orange',
 );

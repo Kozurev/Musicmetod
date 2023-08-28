@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 1.3.2 - 2022-06-22
+
+* Raised minimum version of Guzzle to address [CVE-2022-31090](https://github.com/advisories/GHSA-25mq-v84q-4j7r) 
+  and [CVE-2022-31091](https://github.com/advisories/GHSA-q559-8m2m-g699)
+
+## 1.3.1 - 2022-06-13
+
+* Raised minimum version of Guzzle to address [CVE-2022-31042](https://github.com/advisories/GHSA-f2wf-25xc-69c9)
+
+## 1.3.0 - 2022-05-26
+
+* Dropped support for PHP <7.4
+* Raised minimum version of Guzzle to address [CVE-2022-29248](https://github.com/advisories/GHSA-cwmx-hcrq-mhc3)
+
 ## 1.2.0 - 2021-05-26
 
 * Added support for Guzzle 7

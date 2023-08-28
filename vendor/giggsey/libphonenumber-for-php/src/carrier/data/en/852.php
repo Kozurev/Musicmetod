@@ -11,7 +11,9 @@
  */
 
 return array (
-  85244 => 'China Mobile',
+  852440 => 'China Mobile',
+  852441 => 'HKT',
+  852444 => 'HKT',
   852460 => 'China Unicom',
   8524607 => 'Multibyte',
   8524610 => 'Sun Mobile',
@@ -53,6 +55,7 @@ return array (
   8524659 => 'China Mobile',
   852466 => 'China Mobile',
   852467 => 'China Mobile',
+  8524678 => 'Sun Mobile',
   852468 => 'China Mobile',
   852510 => 'China Mobile',
   852511 => 'Sun Mobile',
@@ -163,6 +166,7 @@ return array (
   8525768 => 'Lycamobile',
   8525769 => 'Lycamobile',
   852577 => 'China Mobile',
+  852578 => 'HKT',
   852579 => 'HKT',
   852590 => 'HKT',
   8525906 => '21Vianet',
@@ -309,6 +313,7 @@ return array (
   852928 => '3',
   852929 => 'China Unicom',
   8529290 => 'Multibyte',
+  8529291 => 'Sun Mobile',
   852930 => 'HKT',
   852931 => 'SmarTone',
   852932 => '3',
@@ -337,6 +342,7 @@ return array (
   852956 => 'China Unicom',
   852957 => '3',
   852958 => 'China Mobile',
+  852959 => 'HKT',
   852960 => 'China Mobile',
   852961 => 'HKT',
   852962 => 'HKT',

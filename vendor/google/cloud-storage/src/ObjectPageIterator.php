@@ -48,6 +48,7 @@ class ObjectPageIterator implements \Iterator
      *
      * @return array|null
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         if (!$this->page) {
@@ -64,7 +65,7 @@ class ObjectPageIterator implements \Iterator
     /**
      * Add new prefixes to the list.
      *
-     * @return array
+     * @return void
      */
     private function updatePrefixes()
     {
