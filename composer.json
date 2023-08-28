@@ -7,7 +7,7 @@
       "nesbot/carbon": "^2.41",
       "ixudra/curl": "^6.21",
       "guzzlehttp/guzzle": "^7.2.0",
-      "guzzlehttp/psr7": "1.7.0"
+      "guzzlehttp/psr7": "1.9.1"
    },
    "autoload": {
      "psr-4": {
