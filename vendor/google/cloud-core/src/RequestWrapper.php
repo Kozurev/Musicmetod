@@ -19,9 +19,9 @@ namespace Google\Cloud\Core;
 
 use Google\Auth\FetchAuthTokenInterface;
 use Google\Auth\GetQuotaProjectInterface;
+use Google\Auth\HttpHandler\Guzzle5HttpHandler;
 use Google\Auth\HttpHandler\Guzzle6HttpHandler;
 use Google\Auth\HttpHandler\HttpHandlerFactory;
-use Google\Cloud\Core\Exception\ServiceException;
 use Google\Cloud\Core\RequestWrapperTrait;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -172,11 +172,6 @@ class RequestWrapper
      *     @type callable $restRetryFunction Sets the conditions for whether or
      *           not a request should attempt to retry. Function signature should
      *           match: `function (\Exception $ex) : bool`.
-     *     @type callable $restRetryListener Runs after the restRetryFunction.
-     *           This might be used to simply consume the exception and
-     *           $arguments b/w retries. This returns the new $arguments thus
-     *           allowing modification on demand for $arguments. For ex:
-     *           changing the headers in b/w retries.
      *     @type callable $restDelayFunction Executes a delay, defaults to
      *           utilizing `usleep`. Function signature should match:
      *           `function (int $delay) : void`.
@@ -186,15 +181,13 @@ class RequestWrapper
      *     @type array $restOptions HTTP client specific configuration options.
      * }
      * @return ResponseInterface
-     * @throws ServiceException
      */
     public function send(RequestInterface $request, array $options = [])
     {
         $retryOptions = $this->getRetryOptions($options);
         $backoff = new ExponentialBackoff(
             $retryOptions['retries'],
-            $retryOptions['retryFunction'],
-            $retryOptions['retryListener'],
+            $retryOptions['retryFunction']
         );
 
         if ($retryOptions['delayFunction']) {
@@ -207,7 +200,7 @@ class RequestWrapper
 
         try {
             return $backoff->execute($this->httpHandler, [
-                $this->applyHeaders($request, $options),
+                $this->applyHeaders($request),
                 $this->getRequestOptions($options)
             ]);
         } catch (\Exception $ex) {
@@ -238,7 +231,6 @@ class RequestWrapper
      *     @type array $restOptions HTTP client specific configuration options.
      * }
      * @return PromiseInterface<ResponseInterface>
-     * @throws ServiceException
      * @experimental The experimental flag means that while we believe this method
      *      or class is ready for use, it may change before release in backwards-
      *      incompatible ways. Please use with caution, and test thoroughly when
@@ -257,7 +249,7 @@ class RequestWrapper
             }
 
             return $asyncHttpHandler(
-                $this->applyHeaders($request, $options),
+                $this->applyHeaders($request),
                 $this->getRequestOptions($options)
             )->then(null, function (\Exception $ex) use ($fn, $retryAttempt, $retryOptions) {
                 $shouldRetry = $retryOptions['retryFunction']($ex, $retryAttempt);
@@ -281,28 +273,14 @@ class RequestWrapper
      * Applies headers to the request.
      *
      * @param RequestInterface $request A PSR-7 request.
-     * @param array $options
      * @return RequestInterface
      */
-    private function applyHeaders(RequestInterface $request, array $options = [])
+    private function applyHeaders(RequestInterface $request)
     {
         $headers = [
             'User-Agent' => 'gcloud-php/' . $this->componentVersion,
-            Retry::RETRY_HEADER_KEY => sprintf(
-                'gl-php/%s gccl/%s',
-                PHP_VERSION,
-                $this->componentVersion
-            ),
+            'x-goog-api-client' => 'gl-php/' . PHP_VERSION . ' gccl/' . $this->componentVersion,
         ];
-
-        if (isset($options['retryHeaders'])) {
-            $headers[Retry::RETRY_HEADER_KEY] = sprintf(
-                '%s %s',
-                $headers[Retry::RETRY_HEADER_KEY],
-                implode(' ', $options['retryHeaders'])
-            );
-            unset($options['retryHeaders']);
-        }
 
         if ($this->shouldSignRequest) {
             $quotaProject = $this->quotaProject;
@@ -334,7 +312,6 @@ class RequestWrapper
      *
      * @param FetchAuthTokenInterface $credentialsFetcher
      * @return array
-     * @throws ServiceException
      */
     private function fetchCredentials(FetchAuthTokenInterface $credentialsFetcher)
     {
@@ -342,14 +319,8 @@ class RequestWrapper
 
         try {
             return $backoff->execute(
-                function () use ($credentialsFetcher) {
-                    if ($token = $credentialsFetcher->fetchAuthToken($this->authHttpHandler)) {
-                        return $token;
-                    }
-                    // As we do not know the reason the credentials fetcher could not fetch the
-                    // token, we should not retry.
-                    throw new \RuntimeException('Unable to fetch token');
-                }
+                [$credentialsFetcher, 'fetchAuthToken'],
+                [$this->authHttpHandler]
             );
         } catch (\Exception $ex) {
             throw $this->convertToGoogleException($ex);
@@ -421,8 +392,12 @@ class RequestWrapper
      */
     private function getRequestOptions(array $options)
     {
-        $restOptions = $options['restOptions'] ?? $this->restOptions;
-        $timeout = $options['requestTimeout'] ?? $this->requestTimeout;
+        $restOptions = isset($options['restOptions'])
+            ? $options['restOptions']
+            : $this->restOptions;
+        $timeout = isset($options['requestTimeout'])
+            ? $options['requestTimeout']
+            : $this->requestTimeout;
 
         if ($timeout && !array_key_exists('timeout', $restOptions)) {
             $restOptions['timeout'] = $timeout;
@@ -446,9 +421,6 @@ class RequestWrapper
             'retryFunction' => isset($options['restRetryFunction'])
                 ? $options['restRetryFunction']
                 : $this->retryFunction,
-            'retryListener' => isset($options['restRetryListener'])
-                ? $options['restRetryListener']
-                : null,
             'delayFunction' => isset($options['restDelayFunction'])
                 ? $options['restDelayFunction']
                 : $this->delayFunction,
@@ -465,7 +437,10 @@ class RequestWrapper
      */
     private function buildDefaultAsyncHandler()
     {
-        return $this->httpHandler instanceof Guzzle6HttpHandler
+        $isGuzzleHandler = $this->httpHandler instanceof Guzzle6HttpHandler
+            || $this->httpHandler instanceof Guzzle5HttpHandler;
+
+        return $isGuzzleHandler
             ? [$this->httpHandler, 'async']
             : [HttpHandlerFactory::build(), 'async'];
     }

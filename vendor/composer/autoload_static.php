@@ -4,17 +4,19 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit23d42998e9124f2983728b6cfb815929
+class ComposerStaticInit4b04af986000ff6718e1d59d2084dac3
 {
     public static $files = array (
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
-        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
+        'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
+        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         '23c18046f52bef3eea034657bafda50f' => __DIR__ . '/..' . '/symfony/polyfill-php81/bootstrap.php',
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         'e39a8b23c42d4e1452234d762b03835a' => __DIR__ . '/..' . '/ramsey/uuid/src/functions.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '27592325262b385204a263c2ab632d6e' => __DIR__ . '/..' . '/kreait/clock/src/Clock.php',
         '256c1545158fc915c75e51a931bdba60' => __DIR__ . '/..' . '/lcobucci/jwt/compat/class-aliases.php',
         '0d273777b2b0d96e49fb3d800c6b0e81' => __DIR__ . '/..' . '/lcobucci/jwt/compat/json-exception-polyfill.php',
@@ -111,6 +113,7 @@ class ComposerStaticInit23d42998e9124f2983728b6cfb815929
             'GuzzleHttp\\' => 11,
             'Google\\Cloud\\Storage\\' => 21,
             'Google\\Cloud\\Core\\' => 18,
+            'Google\\CRC32\\' => 13,
             'Google\\Auth\\' => 12,
             'Giggsey\\Locale\\' => 15,
         ),
@@ -214,7 +217,6 @@ class ComposerStaticInit23d42998e9124f2983728b6cfb815929
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -310,6 +312,10 @@ class ComposerStaticInit23d42998e9124f2983728b6cfb815929
         array (
             0 => __DIR__ . '/..' . '/google/cloud-core/src',
         ),
+        'Google\\CRC32\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/google/crc32/src',
+        ),
         'Google\\Auth\\' => 
         array (
             0 => __DIR__ . '/..' . '/google/auth/src',
@@ -358,9 +364,9 @@ class ComposerStaticInit23d42998e9124f2983728b6cfb815929
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit23d42998e9124f2983728b6cfb815929::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit23d42998e9124f2983728b6cfb815929::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit23d42998e9124f2983728b6cfb815929::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit4b04af986000ff6718e1d59d2084dac3::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit4b04af986000ff6718e1d59d2084dac3::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit4b04af986000ff6718e1d59d2084dac3::$classMap;
 
         }, null, ClassLoader::class);
     }

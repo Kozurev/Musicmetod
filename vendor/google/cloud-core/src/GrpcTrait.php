@@ -21,7 +21,6 @@ use Google\ApiCore\CredentialsWrapper;
 use Google\Cloud\Core\ArrayTrait;
 use Google\Cloud\Core\Duration;
 use Google\Cloud\Core\Exception\NotFoundException;
-use Google\Cloud\Core\Exception\ServiceException;
 use Google\Cloud\Core\GrpcRequestWrapper;
 use Google\Protobuf\NullValue;
 
@@ -67,15 +66,13 @@ trait GrpcTrait
      * @param array $args
      * @param bool $whitelisted
      * @return \Generator|array
-     * @throws ServiceException
      */
     public function send(callable $request, array $args, $whitelisted = false)
     {
         $requestOptions = $this->pluckArray([
             'grpcOptions',
             'retries',
-            'requestTimeout',
-            'grpcRetryFunction'
+            'requestTimeout'
         ], $args[count($args) - 1]);
 
         try {
@@ -238,8 +235,6 @@ trait GrpcTrait
 
                 return ['list_value' => $this->formatListForApi($value)];
         }
-
-        return [];
     }
 
     /**

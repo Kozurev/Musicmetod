@@ -18,6 +18,7 @@
 namespace Google\Auth;
 
 use DateTime;
+use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -109,11 +110,21 @@ class AccessToken
      */
     public function verify($token, array $options = [])
     {
-        $audience = $options['audience'] ?? null;
-        $issuer = $options['issuer'] ?? null;
-        $certsLocation = $options['certsLocation'] ?? self::FEDERATED_SIGNON_CERT_URL;
-        $cacheKey = $options['cacheKey'] ?? $this->getCacheKeyFromCertLocation($certsLocation);
-        $throwException = $options['throwException'] ?? false; // for backwards compatibility
+        $audience = isset($options['audience'])
+            ? $options['audience']
+            : null;
+        $issuer = isset($options['issuer'])
+            ? $options['issuer']
+            : null;
+        $certsLocation = isset($options['certsLocation'])
+            ? $options['certsLocation']
+            : self::FEDERATED_SIGNON_CERT_URL;
+        $cacheKey = isset($options['cacheKey'])
+            ? $options['cacheKey']
+            : $this->getCacheKeyFromCertLocation($certsLocation);
+        $throwException = isset($options['throwException'])
+            ? $options['throwException']
+            : false; // for backwards compatibility
 
         // Check signature against each available cert.
         $certs = $this->getCerts($certsLocation, $cacheKey, $options);
@@ -408,7 +419,7 @@ class AccessToken
                 $exponent
             ]), 256),
         ]);
-        return $key->toString('PKCS8');
+        return $key->toString('PKCS1');
     }
 
     /**

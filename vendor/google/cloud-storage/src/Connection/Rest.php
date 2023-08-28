@@ -29,6 +29,8 @@ use Google\Cloud\Core\Upload\StreamableUploader;
 use Google\Cloud\Core\UriTrait;
 use Google\Cloud\Storage\Connection\ConnectionInterface;
 use Google\Cloud\Storage\StorageClient;
+use Google\CRC32\Builtin;
+use Google\CRC32\CRC32;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\MimeType;
 use GuzzleHttp\Psr7\Request;
@@ -658,15 +660,21 @@ class Rest implements ConnectionInterface
     private function crcFromStream(StreamInterface $data)
     {
         $pos = $data->tell();
-        $data->rewind();
-        $crc32c = hash_init('crc32c');
-        while (!$data->eof()) {
-            $buffer = $data->read(1048576);
-            hash_update($crc32c, $buffer);
+
+        if ($pos > 0) {
+            $data->rewind();
         }
+
+        $crc32c = CRC32::create(CRC32::CASTAGNOLI);
+
+        $data->rewind();
+        while (!$data->eof()) {
+            $crc32c->update($data->read(1048576));
+        }
+
         $data->seek($pos);
-        $hash = hash_final($crc32c, true);
-        return base64_encode($hash);
+
+        return base64_encode($crc32c->hash(true));
     }
 
     /**
@@ -684,12 +692,13 @@ class Rest implements ConnectionInterface
     /**
      * Check if hash() supports crc32c.
      *
-     * @deprecated
+     * Protected access for unit testing.
+     *
      * @return bool
      */
     protected function supportsBuiltinCrc32c()
     {
-        return extension_loaded('hash') && in_array('crc32c', hash_algos());
+        return Builtin::supports(CRC32::CASTAGNOLI);
     }
 
     /**

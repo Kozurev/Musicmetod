@@ -17,6 +17,7 @@
 
 namespace Google\Cloud\Core;
 
+use Google\Auth\HttpHandler\Guzzle5HttpHandler;
 use Google\Auth\HttpHandler\Guzzle6HttpHandler;
 use Google\Auth\HttpHandler\HttpHandlerFactory;
 use Google\Cloud\BigQuery\BigQueryClient;
@@ -434,7 +435,9 @@ class ServiceBuilder
         }
 
         if (!isset($config['asyncHttpHandler'])) {
-            $config['asyncHttpHandler'] = $config['httpHandler'] instanceof Guzzle6HttpHandler
+            $isGuzzleHandler = $config['httpHandler'] instanceof Guzzle6HttpHandler
+                || $config['httpHandler'] instanceof Guzzle5HttpHandler;
+            $config['asyncHttpHandler'] = $isGuzzleHandler
                 ? [$config['httpHandler'], 'async']
                 : [HttpHandlerFactory::build(), 'async'];
         }

@@ -60,8 +60,9 @@ trait SerializableClientTrait
             'closureSerializer' => null,
             'clientConfig' => []
         ];
-        $this->closureSerializer = $options['closureSerializer']
-            ?? $this->getDefaultClosureSerializer();
+        $this->closureSerializer = isset($options['closureSerializer'])
+            ? $options['closureSerializer']
+            : $this->getDefaultClosureSerializer();
         $this->setWrappedClientConfig($options);
     }
 
@@ -70,7 +71,9 @@ trait SerializableClientTrait
      */
     private function setWrappedClientConfig(array $options)
     {
-        $config = $options['clientConfig'] ?? [];
+        $config = isset($options['clientConfig'])
+            ? $options['clientConfig']
+            : [];
 
         if ($config && $this->closureSerializer) {
             $this->closureSerializer->wrapClosures($config);

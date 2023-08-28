@@ -700,7 +700,7 @@ class StorageObject
      *
      * ```
      * // Download all objects in a bucket asynchronously.
-     * use GuzzleHttp\Promise\Utils;
+     * use GuzzleHttp\Promise;
      * use Psr\Http\Message\StreamInterface;
      *
      * $promises = [];
@@ -712,7 +712,7 @@ class StorageObject
      *         });
      * }
      *
-     * Utils::unwrap($promises);
+     * Promise\unwrap($promises);
      * ```
      *
      * @see https://cloud.google.com/storage/docs/json_api/v1/objects/get Objects get API documentation.
