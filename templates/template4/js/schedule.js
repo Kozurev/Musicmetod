@@ -737,7 +737,7 @@ function saveScheduleTask(formData, func) {
 }
 
 function refreshSchedule(pageType) {
-    if (pageType == 'client') {
+    if (pageType == 'client' || $('.schedule_calendar').length == 0) { //TODO: решение не из лучших, но быстрое и эффективное
         $.ajax({
             type: 'GET',
             url: window.location.href + '&ajax=1',
