@@ -481,3 +481,22 @@ if ($action === 'checkStatus') {
         'message' => 'Данные платежа были обновлены'
     ]));
 }
+
+if ($action === 'check_p2p_available') {
+    if (!User_Auth::current()->isClient()) {
+        Core_Page_Show::instance()->error(403);
+    }
+
+    $amount = request()->get('amount', 0);
+    $dateFrom = \Carbon\Carbon::make('2024-09-01');
+    $dateTo = \Carbon\Carbon::make('2024-09-30');
+
+    $p2pService = new \Model\P2P\P2P();
+
+    // TODO: добавить сразу подгрузку данных для перевода
+
+    exit(json_encode([
+        'status' => true,
+        'receivers' => $p2pService->getTeachersList($amount, $dateFrom, $dateTo),
+    ]));
+}
