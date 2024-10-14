@@ -719,7 +719,7 @@ class Core_Entity extends Core_Entity_Model
         $xslRelativePath = explode('/xsl/musadm/', $this->xsl())[1] ?? '';
         $xslLogFileName = preg_replace('~/~', '_', $xslRelativePath);
         $xslLogFileName = preg_replace('"\.xsl$"', '.xml', $xslLogFileName);
-        $xml->save($logStorage . '/' . $xslLogFileName);
+        //$xml->save($logStorage . '/' . $xslLogFileName);
 
         // Объект стиля
         $xsl = new DOMDocument();
