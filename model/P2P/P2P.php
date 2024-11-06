@@ -12,6 +12,8 @@ use Payment;
 class P2P
 {
     private static bool $isInitialized = false;
+    private string $apiUrl;
+    private string $authToken;
     /** @var P2PReceiverDTO[] */
     private static array $receivers;
 
@@ -27,6 +29,8 @@ class P2P
         }
 
         global $CFG;
+        $this->apiUrl = $CFG->p2p->apiUrl;
+        $this->authToken = $CFG->p2p->authToken;
         $receiversList = array_map(
             function (array $receiverData): P2PReceiverDTO {
                 return new P2PReceiverDTO(

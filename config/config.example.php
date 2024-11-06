@@ -57,3 +57,14 @@ $CFG->credits->tinkoff->showcase_id = '';
 $CFG->payonline = new stdClass();
 $CFG->payonline->merchant_id = '';
 $CFG->payonline->secret_token = '';
+
+$CFG->p2p = new stdClass();
+$CFG->p2p->api_url = '';
+$CFG->p2p->project_auth_token = '';
+$CFG->p2p->auth_user_tokens = [
+    [
+        'user_id' => 0,
+        'receiver_id' => 0,
+        'auth_token' => '',
+    ],
+];

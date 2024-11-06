@@ -488,8 +488,8 @@ if ($action === 'check_p2p_available') {
     }
 
     $amount = request()->get('amount', 0);
-    $dateFrom = \Carbon\Carbon::make('2024-09-01');
-    $dateTo = \Carbon\Carbon::make('2024-09-30');
+    $dateFrom = \Carbon\Carbon::now()->subMonth()->startOfMonth();
+    $dateTo = \Carbon\Carbon::now()->subMonth()->endOfMonth();
 
     $p2pService = new \Model\P2P\P2P();
 
