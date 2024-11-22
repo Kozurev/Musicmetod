@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Model\P2P;
 
 use Carbon\Carbon;
+use Model\Api;
 use Model\P2P\DTO\P2PReceiverDTO;
+use Model\P2P\DTO\ReceiverPaymentDataDTO;
 use Model\P2P\DTO\TeacherDTO;
 use Payment;
 
@@ -29,8 +31,8 @@ class P2P
         }
 
         global $CFG;
-        $this->apiUrl = $CFG->p2p->apiUrl;
-        $this->authToken = $CFG->p2p->authToken;
+        $this->apiUrl = $CFG->p2p->api_url;
+        $this->authToken = $CFG->p2p->project_auth_token;
         $receiversList = array_map(
             function (array $receiverData): P2PReceiverDTO {
                 return new P2PReceiverDTO(
@@ -73,7 +75,7 @@ class P2P
      * @param Carbon $dateTo
      * @return TeacherDTO[]
      */
-    public function getTeachersList(
+    protected function getTeachersDTO(
         int $amount,
         Carbon $dateFrom,
         Carbon $dateTo
@@ -107,15 +109,77 @@ class P2P
             ->having('salary + bonuses_income - bonuses_payed', '>=', $amount)
             ->get();
 
-        $instance = $this;
         return $teachers->map(
             static fn(\stdClass $teacherData): TeacherDTO => new TeacherDTO(
                 (int)$teacherData->teacher_id,
-                (int)$instance->getReceiverIdByUserId((int)$teacherData->teacher_id),
                 (string)$teacherData->fio,
             )
         )->toArray();
     }
 
+    /**
+     * @param array $teachersIds
+     * @return ReceiverPaymentDataDTO[]
+     */
+    protected function getReceiversPaymentsDataDTO(array $teachersIds): array
+    {
+        $instance = $this;
+        $receiversIds = array_filter(
+            array_map(
+                function (int $teacherId) use ($instance): ?int {
+                    return $instance->getReceiverIdByUserId($teacherId);
+                },
+                $teachersIds,
+            ),
+        );
+        if (empty($receiversIds)) {
+            return [];
+        }
+
+        $response = Api::getJsonRequest(
+            $this->apiUrl . '/receiver',
+            ['receivers_ids' => $receiversIds],
+            ['Authorization: Bearer ' . $this->authToken],
+            Api::REQUEST_METHOD_GET,
+        );
+        $receiversData = json_decode($response);
+        $receiversDataDTO = [];
+        if (is_array($receiversData->data)) {
+            foreach ($receiversData->data as $receiverData) {
+                $receiversDataDTO[(int)$receiverData->receiver_id] = new ReceiverPaymentDataDTO(
+                    (int)$receiverData->receiver_id,
+                    $receiverData->card_number,
+                    $receiverData->phone_number,
+                    $receiverData->comment,
+                );
+            }
+        }
+
+        return $receiversDataDTO;
+    }
+
+    public function getReceiversDataAggregate(
+        int $amount,
+        Carbon $dateFrom,
+        Carbon $dateTo
+    ): array {
+        $teachersDTO = $this->getTeachersDTO($amount, $dateFrom, $dateTo);
+        if (empty($teachersDTO)) {
+            return [];
+        }
+        $receiversPaymentDataDTO = $this->getReceiversPaymentsDataDTO(array_map(
+            static fn (TeacherDTO $teacherDTO) => $teacherDTO->getUserId(),
+            $teachersDTO
+        ));
+
+        $instance = $this;
+        return array_map(
+            static fn ($teacherDTO): array => [
+                'teacher' => $teacherDTO,
+                'payment_data' => $receiversPaymentDataDTO[$instance->getReceiverIdByUserId($teacherDTO->getUserId())] ?? null,
+            ],
+            $teachersDTO
+        );
+    }
 
 }

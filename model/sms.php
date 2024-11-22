@@ -2,8 +2,8 @@
 
 namespace Model;
 
-use Model\Sms\Sms_Template as Template;
 use Illuminate\Support\Collection;
+use Model\Sms\Sms_Template as Template;
 
 /**
  * Фассад для рассылки SMS сообщений
@@ -274,7 +274,7 @@ class sms extends Api
      */
     public function send() : \stdClass
     {
-        $response = json_decode(self::getJsonRequest(self::makeUrl(self::ACTION_SEND), json_encode($this->makeRequestData())));
+        $response = json_decode(self::getJsonRequest(self::makeUrl(self::ACTION_SEND), $this->makeRequestData()));
         if (($response->status ?? 'error') === 'error') {
             throw new \Exception(($response->data->debugInfo ?? '') . ' ' . ($response->data->message ?? 'undefined error'));
         }

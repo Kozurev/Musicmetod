@@ -75,12 +75,11 @@ class MyCalls extends Api
      */
     public function makeCall(string $phoneNumber)
     {
-        $requestData = [
+        return self::getJsonRequest($this->apiUrl, [
             self::PARAM_USER_NAME   => $this->email,
             self::PARAM_API_TOKEN   => $this->apiToken,
             self::PARAM_ACTION      => self::$methods[self::ACTION_MAKE_CALL],
             self::PARAM_TO          => $phoneNumber
-        ];
-        return self::getJsonRequest($this->apiUrl, json_encode($requestData));
+        ]);
     }
 }

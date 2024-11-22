@@ -33,29 +33,23 @@ class Api
 
     /**
      * @param string $link
-     * @param string $jsonData
+     * @param array $params
+     * @param array $headers
+     * @param string $method
      * @return mixed
      */
-    public static function getJsonRequest(string $link, string $jsonData)
-    {
-//        $context = stream_context_create([
-//            'http' => [
-//                'method' => 'POST',
-//                'header' => [
-//                    'Content-Type: application/json',
-//                    'Content-Length: ' . strlen($jsonData)
-//                ],
-//                'content' => $jsonData
-//            ]
-//        ]);
-//        return file_get_contents($link, false, $context);
+    public static function getJsonRequest(
+        string $link,
+        array $params,
+        array $headers = [],
+        string $method = self::REQUEST_METHOD_POST
+    ) {
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $link);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_POST, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'accept: application/json']);
-        //curl_setopt($curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array_merge(['Content-Type: application/json', 'accept: application/json'], $headers));
+        curl_setopt($curl, CURLOPT_POST, $method === self::REQUEST_METHOD_POST);
         $response = curl_exec($curl);
         curl_close($curl);
         return $response;

@@ -488,15 +488,13 @@ if ($action === 'check_p2p_available') {
     }
 
     $amount = request()->get('amount', 0);
-    $dateFrom = \Carbon\Carbon::now()->subMonth()->startOfMonth();
-    $dateTo = \Carbon\Carbon::now()->subMonth()->endOfMonth();
+    $dateFrom = \Carbon\Carbon::now()->startOfMonth();
+    $dateTo = \Carbon\Carbon::now()->endOfMonth();
 
     $p2pService = new \Model\P2P\P2P();
 
-    // TODO: добавить сразу подгрузку данных для перевода
-
     exit(json_encode([
         'status' => true,
-        'receivers' => $p2pService->getTeachersList($amount, $dateFrom, $dateTo),
+        'receivers' => $p2pService->getReceiversDataAggregate($amount, $dateFrom, $dateTo),
     ]));
 }
