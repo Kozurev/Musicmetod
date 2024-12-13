@@ -529,3 +529,15 @@ if ($action === 'create_p2p_transaction') {
         'transaction_id' => $remotePaymentDTO->getTransactionDTO()->getId(),
     ]));
 }
+
+if ($action === 'get_p2p_teacher_transactions') {
+    // TODO: возможно стоит добавить фильтр по статусу
+    // TODO: добавить поиск p2p транзакций преподавателя
+    // TODO: добавить в p2p команду для формирования списка транзакций +фильтры +сортировка
+}
+
+if ($action === 'approve_p2p_transaction') {
+    // TODO: добавить апрув/кансел транзакции преподавателя
+}
+
+
