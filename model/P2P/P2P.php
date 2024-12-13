@@ -6,9 +6,12 @@ namespace Model\P2P;
 
 use Carbon\Carbon;
 use Model\Api;
+use Model\P2P\DTO\CreateTransactionDTO;
 use Model\P2P\DTO\P2PReceiverDTO;
 use Model\P2P\DTO\ReceiverPaymentDataDTO;
+use Model\P2P\DTO\RemotePaymentDTO;
 use Model\P2P\DTO\TeacherDTO;
+use Model\P2P\DTO\TransactionDTO;
 use Payment;
 
 class P2P
@@ -69,7 +72,20 @@ class P2P
             : null;
     }
 
+    private function getUserIdByReceiverId(int $receiverId): ?int
+    {
+        foreach (self::$receivers as $receiver) {
+            if ($receiver->getReceiverId() === $receiverId) {
+                return $receiver->getUserId();
+            }
+        }
+
+        return null;
+    }
+
     /**
+     * Поиск доступных преподавателей с накопившейся суммой для выплаты более чем $amount в период с $dateFrom по $dateTo
+     *
      * @param int $amount
      * @param Carbon $dateFrom
      * @param Carbon $dateTo
@@ -118,7 +134,9 @@ class P2P
     }
 
     /**
-     * @param array $teachersIds
+     * Поиск данных для p2p перевода из списка доступных преподавателей
+     *
+     * @param  list<int> $teachersIds
      * @return ReceiverPaymentDataDTO[]
      */
     protected function getReceiversPaymentsDataDTO(array $teachersIds): array
@@ -158,6 +176,14 @@ class P2P
         return $receiversDataDTO;
     }
 
+    /**
+     * Получение аггрегатного списка возможных преподавателей и их платежных данных для p2p переводов
+     *
+     * @param int $amount
+     * @param Carbon $dateFrom
+     * @param Carbon $dateTo
+     * @return array
+     */
     public function getReceiversDataAggregate(
         int $amount,
         Carbon $dateFrom,
@@ -179,6 +205,67 @@ class P2P
                 'payment_data' => $receiversPaymentDataDTO[$instance->getReceiverIdByUserId($teacherDTO->getUserId())] ?? null,
             ],
             $teachersDTO
+        );
+    }
+
+    public function createPayment(
+        int $userId,
+        int $receiverId,
+        float $amount
+    ): ?RemotePaymentDTO {
+        $payment = new Payment();
+        $payment->user($userId);
+        $payment->value((int)($amount));
+        $payment->description('P2P перевод');
+        $payment->type(Payment::TYPE_INCOME);
+        $payment->status(Payment::STATUS_PENDING);
+        $payment->save();
+        if (!$payment->getId()) {
+            return null;
+        }
+
+        $transactionDTO = $this->createP2PTransaction(new CreateTransactionDTO(
+            $receiverId,
+            $amount,
+            $userId,
+            $this->getUserIdByReceiverId($receiverId),
+            $payment->getId(),
+        ));
+
+        if (!$transactionDTO->getId()) {
+            $payment->setStatusError();
+            $payment->description('Не удалось создать транзакцию на стороне p2p сервиса');
+        } else {
+            $payment->merchantOrderId((string)$transactionDTO->getId());
+        }
+        $payment->save();
+
+        return new RemotePaymentDTO($payment, $transactionDTO);
+    }
+
+    private function createP2PTransaction(CreateTransactionDTO $createTransactionDTO): ?TransactionDTO
+    {
+        $response = Api::getJsonRequest(
+            $this->apiUrl . '/transaction/create',
+            $createTransactionDTO->toArray(),
+            ['Authorization: Bearer ' . $this->authToken],
+            Api::REQUEST_METHOD_POST,
+        );
+
+        $transactionData = json_decode($response);
+        if (empty($transactionData->data)) {
+            \Log::instance()->error('p2p', 'Response: ' . $response);
+            return null;
+        }
+
+        return new TransactionDTO(
+            (int)$transactionData->data->id,
+            (int)$transactionData->data->status,
+            (float)$transactionData->data->amount,
+            (int)$transactionData->data->receiver_id,
+            (string)($transactionData->data->createdAt ?? date('Y-m-d H:i:s')),
+            (string)($transactionData->data->updatedAt ?? date('Y-m-d H:i:s')),
+            (array)($transactionData->data->extra_data ?? [])
         );
     }
 

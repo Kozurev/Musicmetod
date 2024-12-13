@@ -483,7 +483,7 @@ if ($action === 'checkStatus') {
 }
 
 if ($action === 'check_p2p_available') {
-    if (!User_Auth::current()->isClient()) {
+    if (!User_Auth::current() || !User_Auth::current()->isClient()) {
         Core_Page_Show::instance()->error(403);
     }
 
@@ -496,5 +496,36 @@ if ($action === 'check_p2p_available') {
     exit(json_encode([
         'status' => true,
         'receivers' => $p2pService->getReceiversDataAggregate($amount, $dateFrom, $dateTo),
+    ]));
+}
+
+if ($action === 'create_p2p_transaction') {
+    if (!User_Auth::current()->isClient()) {
+        Core_Page_Show::instance()->error(403);
+    }
+
+    $amount = (float)request()->get('amount', 0);
+    $receiverId = (int)request()->get('receiverId', 0);
+
+    if (empty($amount) || empty($receiverId)) {
+        exit(REST::responseError(REST::ERROR_CODE_REQUIRED_PARAM, 'Отсутствует один из обязательных параметров'));
+    }
+
+    $p2pService = new \Model\P2P\P2P();
+    $remotePaymentDTO = $p2pService->createPayment(
+        User_Auth::current()->getId(),
+        $receiverId,
+        $amount
+    );
+
+    if (null === $remotePaymentDTO) {
+        exit(json_encode([
+            'status' => false,
+        ]));
+    }
+
+    exit(json_encode([
+        'payment_id' => $remotePaymentDTO->getPayment()->getId(),
+        'transaction_id' => $remotePaymentDTO->getTransactionDTO()->getId(),
     ]));
 }
