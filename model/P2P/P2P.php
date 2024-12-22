@@ -170,7 +170,7 @@ class P2P
         }
 
         $response = Api::getJsonRequest(
-            $this->apiUrl . '/receiver',
+            $this->apiUrl . '/receivers',
             ['receivers_ids' => $receiversIds],
             ['Authorization: Bearer ' . $this->authToken],
             Api::REQUEST_METHOD_GET,
@@ -277,7 +277,7 @@ class P2P
     private function createP2PTransaction(CreateTransactionDTO $createTransactionDTO): TransactionDTO
     {
         $response = Api::getJsonRequest(
-            $this->apiUrl . '/transaction/create',
+            $this->apiUrl . '/transactions/create',
             $createTransactionDTO->toArray(),
             $this->getAuthHeader(),
             Api::REQUEST_METHOD_POST,
@@ -352,7 +352,7 @@ class P2P
         }
 
         $response = Api::getJsonRequest(
-            $this->apiUrl . '/transaction/receiver',
+            $this->apiUrl . '/transactions',
             $requestParams,
             $this->getAuthHeader($receiver->getAuthToken()),
             Api::REQUEST_METHOD_GET,
