@@ -14,6 +14,8 @@ class Log
     const TYPE_MAIL = 'mail';
     const TYPE_CHECKOUT = 'checkout';
     const TYPE_RECAPRCHA = 'recaptcha';
+    const TYPE_API = 'api';
+    const TYPE_P2P = 'p2p';
 
     /**
      * @var self|null
@@ -160,6 +162,18 @@ class Log
             $this->error(self::TYPE_MAIL, $throwable->getMessage());
             $this->emailNotificationEnabled = $notificationEnabled;
         }
+    }
+
+    public function exception(string $type, Throwable $exception)
+    {
+        $errorLogMessage = 'Error in file '
+            . $exception->getFile()
+            . ' on line '
+            . $exception->getLine()
+            . ':'
+            . PHP_EOL . $exception->getMessage()
+            . PHP_EOL;
+        $this->error($type, $errorLogMessage);
     }
 
 }

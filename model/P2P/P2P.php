@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Model\P2P;
 
 use Carbon\Carbon;
+use Log;
 use Model\Api;
 use Model\P2P\DTO\CreateTransactionDTO;
 use Model\P2P\DTO\P2PReceiverDTO;
@@ -12,6 +13,7 @@ use Model\P2P\DTO\ReceiverPaymentDataDTO;
 use Model\P2P\DTO\RemotePaymentDTO;
 use Model\P2P\DTO\TeacherDTO;
 use Model\P2P\DTO\TransactionDTO;
+use Model\P2P\Exception\BaseP2PException;
 use Payment;
 
 class P2P
@@ -65,10 +67,17 @@ class P2P
         );
     }
 
+    private function getReceiverByUserId(int $userId): ?P2PReceiverDTO
+    {
+        return self::$receivers[$userId] ?? null;
+    }
+
     private function getReceiverIdByUserId(int $userId): ?int
     {
-        return isset(self::$receivers[$userId])
-            ? self::$receivers[$userId]->getReceiverId()
+        $receiverDTO = $this->getReceiverByUserId($userId);
+
+        return null !== $receiverDTO
+            ? $receiverDTO->getReceiverId()
             : null;
     }
 
@@ -81,6 +90,11 @@ class P2P
         }
 
         return null;
+    }
+
+    private function getAuthHeader(string $authToken = null): array
+    {
+        return ['Authorization: Bearer ' . ($authToken ?: $this->authToken)];
     }
 
     /**
@@ -136,8 +150,9 @@ class P2P
     /**
      * Поиск данных для p2p перевода из списка доступных преподавателей
      *
-     * @param  list<int> $teachersIds
+     * @param list<int> $teachersIds
      * @return ReceiverPaymentDataDTO[]
+     * @throws BaseP2PException
      */
     protected function getReceiversPaymentsDataDTO(array $teachersIds): array
     {
@@ -171,18 +186,21 @@ class P2P
                     $receiverData->comment,
                 );
             }
+        } else {
+            throw $this->makeApiException($response);
         }
 
         return $receiversDataDTO;
     }
 
     /**
-     * Получение аггрегатного списка возможных преподавателей и их платежных данных для p2p переводов
+     * Получение агрегатного списка возможных преподавателей и их платежных данных для p2p переводов
      *
      * @param int $amount
      * @param Carbon $dateFrom
      * @param Carbon $dateTo
      * @return array
+     * @throws BaseP2PException
      */
     public function getReceiversDataAggregate(
         int $amount,
@@ -224,49 +242,132 @@ class P2P
             return null;
         }
 
-        $transactionDTO = $this->createP2PTransaction(new CreateTransactionDTO(
-            $receiverId,
-            $amount,
-            $userId,
-            $this->getUserIdByReceiverId($receiverId),
-            $payment->getId(),
-        ));
-
-        if (!$transactionDTO->getId()) {
-            $payment->setStatusError();
-            $payment->description('Не удалось создать транзакцию на стороне p2p сервиса');
-        } else {
+        $transactionDTO = null;
+        try {
+            $transactionDTO = $this->createP2PTransaction(new CreateTransactionDTO(
+                $receiverId,
+                $amount,
+                $userId,
+                $this->getUserIdByReceiverId($receiverId),
+                $payment->getId(),
+            ));
             $payment->merchantOrderId((string)$transactionDTO->getId());
+        } catch (BaseP2PException $p2pException) {
+            $payment->setStatusError();
+            $payment->description('Не удалось создать транзакцию на стороне p2p сервиса. Обратитесь к менеджеру.');
+            $payment->appendComment('Код ошибки создания транзакции на стороне p2p: ' . $p2pException->getErrorLogHash());
+        } catch (\Throwable $exception) {
+            $payment->setStatusError();
+            $payment->description('Не удалось создать транзакцию на стороне p2p сервиса. Обратитесь к менеджеру.');
+            $payment->appendComment('Неизвестная ошибка создания транзакции: ' . $exception->getMessage());
         }
+
         $payment->save();
 
-        return new RemotePaymentDTO($payment, $transactionDTO);
+        return null !== $transactionDTO
+            ? new RemotePaymentDTO($payment, $transactionDTO)
+            : null;
     }
 
-    private function createP2PTransaction(CreateTransactionDTO $createTransactionDTO): ?TransactionDTO
+    /**
+     * @param CreateTransactionDTO $createTransactionDTO
+     * @return TransactionDTO
+     * @throws BaseP2PException
+     */
+    private function createP2PTransaction(CreateTransactionDTO $createTransactionDTO): TransactionDTO
     {
         $response = Api::getJsonRequest(
             $this->apiUrl . '/transaction/create',
             $createTransactionDTO->toArray(),
-            ['Authorization: Bearer ' . $this->authToken],
+            $this->getAuthHeader(),
             Api::REQUEST_METHOD_POST,
         );
 
         $transactionData = json_decode($response);
-        if (empty($transactionData->data)) {
-            \Log::instance()->error('p2p', 'Response: ' . $response);
-            return null;
+        if (null === $transactionData->data) {
+            throw $this->makeApiException($response);
         }
 
+        return $this->buildTransactionDTO($transactionData->data);
+    }
+
+    /**
+     * @param \stdClass $transactionData
+     * @return TransactionDTO
+     */
+    private function buildTransactionDTO(\stdClass $transactionData): TransactionDTO
+    {
         return new TransactionDTO(
-            (int)$transactionData->data->id,
-            (int)$transactionData->data->status,
-            (float)$transactionData->data->amount,
-            (int)$transactionData->data->receiver_id,
-            (string)($transactionData->data->createdAt ?? date('Y-m-d H:i:s')),
-            (string)($transactionData->data->updatedAt ?? date('Y-m-d H:i:s')),
-            (array)($transactionData->data->extra_data ?? [])
+            (int)$transactionData->id,
+            (int)$transactionData->status,
+            (float)$transactionData->amount,
+            (int)$transactionData->receiver_id,
+            (string)($transactionData->createdAt ?? date('Y-m-d H:i:s')),
+            (string)($transactionData->updatedAt ?? date('Y-m-d H:i:s')),
+            (array)($transactionData->extra_data ?? [])
         );
+    }
+
+    /**
+     * @param string $jsonResponse
+     * @return BaseP2PException
+     */
+    private function makeApiException(string $jsonResponse): BaseP2PException
+    {
+        $decodedResponse = json_decode($jsonResponse, true);
+        $errorMessage = $decodedResponse['message'] ?? null;
+        $hash = !empty($errorMessage) ? md5($errorMessage) : md5($jsonResponse);
+        // TODO: обязательно добавить нормальный вывод ошибок
+        Log::instance()->error(Log::TYPE_P2P, 'Hash: ' . $hash . PHP_EOL . $jsonResponse);
+
+        return new BaseP2PException($hash);
+    }
+
+    /**
+     * Получение списка транзакций
+     *
+     * @param int $userId
+     * @param int $limit
+     * @param int $offset
+     * @param array $statuses
+     * @return TransactionDTO[]
+     * @throws BaseP2PException
+     */
+    public function getReceiverTransactionsByUserId(
+        int $userId,
+        int $limit,
+        int $offset,
+        array $statuses = []
+    ): array {
+        $receiver = $this->getReceiverByUserId($userId);
+        if (null === $receiver) {
+            return [];
+        }
+        $requestParams = [
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
+        if (!empty($statuses)) {
+            $requestParams['statuses'] = $statuses;
+        }
+
+        $response = Api::getJsonRequest(
+            $this->apiUrl . '/transaction/receiver',
+            $requestParams,
+            $this->getAuthHeader($receiver->getAuthToken()),
+            Api::REQUEST_METHOD_GET,
+        );
+        $transactionsData = json_decode($response);
+        if (null === $transactionsData->data) {
+            throw $this->makeApiException($response);
+        }
+
+        $transactionsDTO = [];
+        foreach ($transactionsData->data as $transactionData) {
+            $transactionsDTO[] = $this->buildTransactionDTO($transactionData);
+        }
+
+        return $transactionsDTO;
     }
 
 }

@@ -5,6 +5,9 @@
  */
 
 use Model\Checkout\Checkout;
+use Model\P2P\DTO\ResponseDTO;
+use Model\P2P\Exception\BaseP2PException;
+use Model\P2P\P2P;
 use Model\Payonline;
 
 foreach ($_GET as $key => $param) {
@@ -491,12 +494,16 @@ if ($action === 'check_p2p_available') {
     $dateFrom = \Carbon\Carbon::now()->startOfMonth();
     $dateTo = \Carbon\Carbon::now()->endOfMonth();
 
-    $p2pService = new \Model\P2P\P2P();
-
-    exit(json_encode([
-        'status' => true,
-        'receivers' => $p2pService->getReceiversDataAggregate($amount, $dateFrom, $dateTo),
-    ]));
+    try {
+        $p2pService = new P2P();
+        $response = ResponseDTO::getSuccess($p2pService->getReceiversDataAggregate($amount, $dateFrom, $dateTo));
+    } catch (BaseP2PException $p2pException) {
+        $response = ResponseDTO::getError($p2pException->getErrorLogHash());
+    } catch (\Throwable $throwable) {
+        Log::instance()->exception(Log::TYPE_API, $throwable);
+        $response = ResponseDTO::getError();
+    }
+    exit(json_encode($response));
 }
 
 if ($action === 'create_p2p_transaction') {
@@ -511,29 +518,53 @@ if ($action === 'create_p2p_transaction') {
         exit(REST::responseError(REST::ERROR_CODE_REQUIRED_PARAM, 'Отсутствует один из обязательных параметров'));
     }
 
-    $p2pService = new \Model\P2P\P2P();
-    $remotePaymentDTO = $p2pService->createPayment(
-        User_Auth::current()->getId(),
-        $receiverId,
-        $amount
-    );
-
-    if (null === $remotePaymentDTO) {
-        exit(json_encode([
-            'status' => false,
-        ]));
+    try {
+        $p2pService = new \Model\P2P\P2P();
+        $remotePaymentDTO = $p2pService->createPayment(
+            User_Auth::current()->getId(),
+            $receiverId,
+            $amount
+        );
+        $response = ResponseDTO::getSuccess($remotePaymentDTO);
+    } catch (BaseP2PException $p2pException) {
+        $response = ResponseDTO::getError($p2pException->getErrorLogHash());
+    } catch (Throwable $throwable) {
+        Log::instance()->exception(Log::TYPE_API, $throwable);
+        $response = ResponseDTO::getError();
     }
 
-    exit(json_encode([
-        'payment_id' => $remotePaymentDTO->getPayment()->getId(),
-        'transaction_id' => $remotePaymentDTO->getTransactionDTO()->getId(),
-    ]));
+    exit(json_encode($response));
 }
 
 if ($action === 'get_p2p_teacher_transactions') {
     // TODO: возможно стоит добавить фильтр по статусу
     // TODO: добавить поиск p2p транзакций преподавателя
     // TODO: добавить в p2p команду для формирования списка транзакций +фильтры +сортировка
+    if (!User_Auth::current()->isTeacher()) {
+        Core_Page_Show::instance()->error(403);
+    }
+
+    $statuses = array_filter(array_map('intval', (array)request()->get('statuses', [])));
+    $limit = (int)request()->get('limit', 10);
+    $offset = (int)request()->get('offset', 0);
+    $p2pService = new \Model\P2P\P2P();
+
+    try {
+        $transactionsDTO = $p2pService->getReceiverTransactionsByUserId(
+            User_Auth::current()->getId(),
+            $limit,
+            $offset,
+            $statuses
+        );
+        $response = ResponseDTO::getSuccess($transactionsDTO);
+    } catch (BaseP2PException $p2pException) {
+        $response = ResponseDTO::getError($p2pException->getErrorLogHash());
+    } catch (Throwable $throwable) {
+        Log::instance()->exception(Log::TYPE_API, $throwable);
+        $response = ResponseDTO::getError();
+    }
+
+    exit(json_encode($response));
 }
 
 if ($action === 'approve_p2p_transaction') {

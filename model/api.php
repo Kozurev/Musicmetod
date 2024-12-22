@@ -45,9 +45,13 @@ class Api
         string $method = self::REQUEST_METHOD_POST
     ) {
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $link);
+        if (self::REQUEST_METHOD_GET === $method) {
+            curl_setopt($curl, CURLOPT_URL, $link . '?' . http_build_query($params));
+        } else {
+            curl_setopt($curl, CURLOPT_URL, $link);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+        }
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
         curl_setopt($curl, CURLOPT_HTTPHEADER, array_merge(['Content-Type: application/json', 'accept: application/json'], $headers));
         curl_setopt($curl, CURLOPT_POST, $method === self::REQUEST_METHOD_POST);
         $response = curl_exec($curl);
