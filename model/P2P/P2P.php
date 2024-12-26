@@ -117,9 +117,12 @@ class P2P
         $bonusesSqlBuilder = (new \Orm())
             ->select('SUM(p.value)')
             ->from('Payment', 'p')
-            ->where('p.user', '=', 'slr.teacher_id')
+            ->where('p.user', '=', \Core::unchanged('slr.teacher_id'))
             ->where('p.datetime', '>=', $dateFrom->format('Y-m-d'))
             ->where('p.datetime', '<=', $dateTo->format('Y-m-d'));
+        $salaryIncomeSql = (clone $bonusesSqlBuilder)
+            ->where('p.type', '=', Payment::TYPE_TEACHER)
+            ->getQueryString();
         $bonusesIncomeSql = (clone $bonusesSqlBuilder)
             ->where('p.type', '=', Payment::TYPE_BONUS_ADD)
             ->getQueryString();
@@ -131,6 +134,7 @@ class P2P
                 'slr.teacher_id AS teacher_id',
                 'CONCAT(u.surname, " ", u.name) AS fio',
                 'IFNULL(SUM(slr.teacher_rate), 0) AS salary',
+                'IFNULL(('.$salaryIncomeSql.'), 0) AS salary_income',
                 'IFNULL(('.$bonusesIncomeSql.'), 0) AS bonuses_income',
                 'IFNULL(('.$bonusesPayedSql.'), 0) AS bonuses_payed',
             ])
@@ -140,7 +144,7 @@ class P2P
             ->where('slr.date', '<=', $dateTo->format('Y-m-d'))
             ->whereIn('slr.teacher_id', $this->getAvailableUsersIds())
             ->groupBy('slr.teacher_id')
-            ->having('salary + bonuses_income - bonuses_payed', '>=', $amount)
+            ->having('salary - salary_income + bonuses_income - bonuses_payed', '>=', $amount)
             ->get();
 
         return $teachers->map(
