@@ -5,6 +5,7 @@
  */
 
 use Model\Checkout\Checkout;
+use Model\P2P\DTO\ApproveTransactionDTO;
 use Model\P2P\DTO\ResponseDTO;
 use Model\P2P\Exception\BaseP2PException;
 use Model\P2P\P2P;
@@ -498,10 +499,10 @@ if ($action === 'check_p2p_available') {
         $p2pService = new P2P();
         $response = ResponseDTO::getSuccess($p2pService->getReceiversDataAggregate($amount, $dateFrom, $dateTo));
     } catch (BaseP2PException $p2pException) {
-        $response = ResponseDTO::getError($p2pException->getErrorLogHash());
+        $response = ResponseDTO::getErrorByHash($p2pException->getErrorLogHash());
     } catch (\Throwable $throwable) {
         Log::instance()->exception(Log::TYPE_API, $throwable);
-        $response = ResponseDTO::getError();
+        $response = ResponseDTO::getErrorByMessage($throwable->getMessage());
     }
     exit(json_encode($response));
 }
@@ -527,10 +528,10 @@ if ($action === 'create_p2p_transaction') {
         );
         $response = ResponseDTO::getSuccess($remotePaymentDTO);
     } catch (BaseP2PException $p2pException) {
-        $response = ResponseDTO::getError($p2pException->getErrorLogHash());
+        $response = ResponseDTO::getErrorByHash($p2pException->getErrorLogHash());
     } catch (Throwable $throwable) {
         Log::instance()->exception(Log::TYPE_API, $throwable);
-        $response = ResponseDTO::getError();
+        $response = ResponseDTO::getErrorByMessage($throwable->getMessage());
     }
 
     exit(json_encode($response));
@@ -558,17 +559,51 @@ if ($action === 'get_p2p_teacher_transactions') {
         );
         $response = ResponseDTO::getSuccess($transactionsDTO);
     } catch (BaseP2PException $p2pException) {
-        $response = ResponseDTO::getError($p2pException->getErrorLogHash());
+        $response = ResponseDTO::getErrorByHash($p2pException->getErrorLogHash());
     } catch (Throwable $throwable) {
         Log::instance()->exception(Log::TYPE_API, $throwable);
-        $response = ResponseDTO::getError();
+        $response = ResponseDTO::getErrorByMessage($throwable->getMessage());
     }
 
     exit(json_encode($response));
 }
 
 if ($action === 'approve_p2p_transaction') {
-    // TODO: добавить апрув/кансел транзакции преподавателя
+    if (!User_Auth::current()->isTeacher()) {
+        Core_Page_Show::instance()->error(403);
+    }
+
+    try {
+        $transactionId = (int)request()->get('transaction_id', 0);
+        $receiptLink = request()->get('receipt_link', null);
+        $receiptFile = isset($_FILES['receipt_file'])
+            ? $_FILES['receipt_file']['tmp_name']
+            : null;
+        if (empty($transactionId)) {
+            throw new Exception('Не указано id транзакции');
+        }
+        if (empty($receiptLink) && empty($receiptFile)) {
+            throw new Exception('Необходимо указать либо ссылку на чек либо файл чека');
+        }
+
+        $approveTransactionDTO = !empty($receiptLink)
+            ? ApproveTransactionDTO::getByReceiptLink($receiptLink)
+            : ApproveTransactionDTO::getByReceiptFile($receiptFile, $_FILES['receipt_file']['type'], $_FILES['receipt_file']['name']);
+        $p2pService = new \Model\P2P\P2P();
+        $remotePaymentApproveDTO = $p2pService->approveTransaction(
+            User_Auth::current()->getId(),
+            $transactionId,
+            $approveTransactionDTO
+        );
+        $response = ResponseDTO::getSuccess($remotePaymentApproveDTO);
+    } catch (BaseP2PException $p2pException) {
+        $response = ResponseDTO::getErrorByHash($p2pException->getErrorLogHash());
+    } catch (Throwable $throwable) {
+        Log::instance()->exception(Log::TYPE_API, $throwable);
+        $response = ResponseDTO::getErrorByMessage($throwable->getMessage());
+    }
+
+    exit(json_encode($response));
 }
 
 

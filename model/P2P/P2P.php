@@ -7,13 +7,17 @@ namespace Model\P2P;
 use Carbon\Carbon;
 use Log;
 use Model\Api;
+use Model\P2P\DTO\ApproveTransactionDTO;
 use Model\P2P\DTO\CreateTransactionDTO;
 use Model\P2P\DTO\P2PReceiverDTO;
+use Model\P2P\DTO\PaymentDTO;
 use Model\P2P\DTO\ReceiverPaymentDataDTO;
+use Model\P2P\DTO\RemotePaymentApproveDTO;
 use Model\P2P\DTO\RemotePaymentDTO;
 use Model\P2P\DTO\TeacherDTO;
 use Model\P2P\DTO\TransactionDTO;
 use Model\P2P\Exception\BaseP2PException;
+use Model\User\User_Client;
 use Payment;
 
 class P2P
@@ -265,7 +269,7 @@ class P2P
         $payment->save();
 
         return null !== $transactionDTO
-            ? new RemotePaymentDTO($payment, $transactionDTO)
+            ? new RemotePaymentDTO(new PaymentDTO($payment), $transactionDTO)
             : null;
     }
 
@@ -304,7 +308,9 @@ class P2P
             (int)$transactionData->receiver_id,
             (string)($transactionData->createdAt ?? date('Y-m-d H:i:s')),
             (string)($transactionData->updatedAt ?? date('Y-m-d H:i:s')),
-            (array)($transactionData->extra_data ?? [])
+            (array)($transactionData->extra_data ?? []),
+            isset($transactionData->receipt_link) ? (string)$transactionData->receipt_link : null,
+            isset($transactionData->receipt_file_id) ? (int)$transactionData->receipt_file_id : null,
         );
     }
 
@@ -368,6 +374,80 @@ class P2P
         }
 
         return $transactionsDTO;
+    }
+
+    public function approveTransaction(
+        int $userId,
+        int $transactionId,
+        ApproveTransactionDTO $approveTransactionDTO
+    ): RemotePaymentApproveDTO {
+        $receiver = $this->getReceiverByUserId($userId);
+        if (null === $receiver) {
+            throw new \Exception('Receiver for user ' . $userId . ' not found');
+        }
+        if (null !== $approveTransactionDTO->getReceiptLink()) {
+            $requestParams = [
+                'receipt_link' => $approveTransactionDTO->getReceiptLink(),
+            ];
+        } else {
+            if (null === $approveTransactionDTO->getReceiptFile()) {
+                throw new \Exception('Receipt file not found');
+            }
+            $requestParams = [
+                'receipt_file' => new \CURLFile(
+                    $approveTransactionDTO->getReceiptFile(),
+                    $approveTransactionDTO->getMime(),
+                    $approveTransactionDTO->getOriginalFileName()
+                ),
+            ];
+        }
+        /** @var Payment|null $clientPayment */
+        $clientPayment = (new Payment())->queryBuilder()
+            ->where('status', '=', Payment::STATUS_PENDING)
+            ->where('type', '=', Payment::TYPE_INCOME)
+            ->where('merchant_order_id', '=', $transactionId)
+            ->find();
+        if (null === $clientPayment) {
+            throw new \Exception('Не найден соответствующий платеж в системе');
+        }
+
+        $response = Api::getJsonRequestWithoutEncode(
+            $this->apiUrl . '/transactions/' . $transactionId . '/approve',
+            $requestParams,
+            array_merge(
+                $this->getAuthHeader($receiver->getAuthToken()),
+                ['Content-Type: multipart/form-data', 'accept: application/json'],
+            ),
+            Api::REQUEST_METHOD_POST,
+        );
+        $transactionData = json_decode($response);
+        if (null === $transactionData->data) {
+            $exception = $this->makeApiException($response);
+            $clientPayment->appendComment('Ошибка подтверждения транзакции на стороне p2p сервиса. Код ошибки: ' . $exception->getMessage());
+            throw $exception;
+        }
+        $transactionDTO = $this->buildTransactionDTO($transactionData->data);
+
+        $clientPayment->setStatusSuccess();
+        $clientPayment->save();
+
+        $client = User_Client::find($clientPayment->user());
+        $clientFio = null !== $client ? $client->getFio() : 'неизвестный пользователь';
+        $teacherPayment = new Payment();
+        $teacherPayment->user($userId);
+        $teacherPayment->value($clientPayment->value());
+        $teacherPayment->description('P2P перевод от ' . $clientFio);
+        $teacherPayment->type(Payment::TYPE_TEACHER);
+        $teacherPayment->status(Payment::STATUS_SUCCESS);
+        $teacherPayment->merchantOrderId((string)$transactionDTO->getId());
+        $teacherPayment->save();
+
+        return new RemotePaymentApproveDTO(
+            true,
+            new PaymentDTO($teacherPayment),
+            new PaymentDTO($clientPayment),
+            $transactionDTO
+        );
     }
 
 }

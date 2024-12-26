@@ -58,4 +58,27 @@ class Api
         curl_close($curl);
         return $response;
     }
+
+    public static function getJsonRequestWithoutEncode(
+        string $link,
+        array $params,
+        array $headers = [],
+        string $method = self::REQUEST_METHOD_POST
+    ) {
+        $curl = curl_init();
+        if (self::REQUEST_METHOD_GET === $method) {
+            curl_setopt($curl, CURLOPT_URL, $link . '?' . http_build_query($params));
+        } else {
+            curl_setopt($curl, CURLOPT_URL, $link);
+        }
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array_merge(['accept: application/json'], $headers));
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, $method === self::REQUEST_METHOD_POST);
+        if ($method === self::REQUEST_METHOD_POST) {
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
+        }
+        $response = curl_exec($curl);
+        curl_close($curl);
+        return $response;
+    }
 }

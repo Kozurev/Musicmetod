@@ -5,24 +5,32 @@ namespace Model\P2P\DTO;
 /**
  * @author Marketplace Team <trade-services-dev@b2b-center.ru>
  */
-class RemotePaymentDTO
+final class RemotePaymentDTO implements \JsonSerializable
 {
-    private \Payment $payment;
+    private PaymentDTO $paymentDTO;
     private TransactionDTO $transactionDTO;
 
-    public function __construct(\Payment $payment, TransactionDTO $transactionDTO)
+    public function __construct(PaymentDTO $paymentDTO, TransactionDTO $transactionDTO)
     {
-        $this->payment = $payment;
+        $this->paymentDTO = $paymentDTO;
         $this->transactionDTO = $transactionDTO;
     }
 
-    public function getPayment(): \Payment
+    public function getPaymentDTO(): PaymentDTO
     {
-        return $this->payment;
+        return $this->paymentDTO;
     }
 
     public function getTransactionDTO(): TransactionDTO
     {
         return $this->transactionDTO;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'payment' => $this->paymentDTO,
+            'transaction' => $this->transactionDTO,
+        ];
     }
 }
