@@ -606,4 +606,30 @@ if ($action === 'approve_p2p_transaction') {
     exit(json_encode($response));
 }
 
+if ($action === 'reject_p2p_transaction') {
+    if (!User_Auth::current()->isTeacher()) {
+        Core_Page_Show::instance()->error(403);
+    }
+    $transactionId = (int)request()->get('transaction_id', 0);
+    $comment = request()->get('comment', null);
 
+    try {
+        if (empty($transactionId)) {
+            throw new Exception('Не указано id транзакции');
+        }
+        $p2pService = new \Model\P2P\P2P();
+        $remotePaymentDTO = $p2pService->rejectTransaction(
+            User_Auth::current()->getId(),
+            $transactionId,
+            $comment
+        );
+        $response = ResponseDTO::getSuccess($remotePaymentDTO);
+    } catch (BaseP2PException $p2pException) {
+        $response = ResponseDTO::getErrorByHash($p2pException->getErrorLogHash());
+    } catch (Throwable $throwable) {
+        Log::instance()->exception(Log::TYPE_API, $throwable);
+        $response = ResponseDTO::getErrorByMessage($throwable->getMessage());
+    }
+
+    exit(json_encode($response));
+}

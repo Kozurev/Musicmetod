@@ -454,4 +454,48 @@ class P2P
         );
     }
 
+    public function rejectTransaction(
+        int $userId,
+        int $transactionId,
+        ?string $comment = null
+    ): RemotePaymentDTO {
+        $receiver = $this->getReceiverByUserId($userId);
+        if (null === $receiver) {
+            throw new \Exception('Receiver for user ' . $userId . ' not found');
+        }
+
+        /** @var Payment|null $clientPayment */
+        $clientPayment = (new Payment())->queryBuilder()
+            ->where('status', '=', Payment::STATUS_PENDING)
+            ->where('type', '=', Payment::TYPE_INCOME)
+            ->where('merchant_order_id', '=', $transactionId)
+            ->find();
+        if (null === $clientPayment) {
+            throw new \Exception('Не найден соответствующий платеж в системе');
+        }
+
+        $response = Api::getJsonRequest(
+            $this->apiUrl . '/transactions/' . $transactionId . '/reject',
+            [],
+            $this->getAuthHeader($receiver->getAuthToken()),
+            Api::REQUEST_METHOD_POST,
+        );
+        $transactionData = json_decode($response);
+        if (null === $transactionData->data) {
+            $exception = $this->makeApiException($response);
+            $clientPayment->appendComment('Ошибка подтверждения транзакции на стороне p2p сервиса. Код ошибки: ' . $exception->getMessage());
+            throw $exception;
+        }
+        $clientPayment->setStatusCanceled();
+        $clientPayment->save();
+        if (!empty($comment)) {
+            $clientPayment->appendComment($comment);
+        }
+
+        return new RemotePaymentDTO(
+            new PaymentDTO($clientPayment),
+            $this->buildTransactionDTO($transactionData->data)
+        );
+    }
+
 }
