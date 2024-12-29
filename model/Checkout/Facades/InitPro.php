@@ -2,8 +2,6 @@
 
 namespace Model\Checkout\Facades;
 
-use Model\Checkout\Model;
-
 /**
  * Class Checkout_InitPro
  * @package Model\Checkout

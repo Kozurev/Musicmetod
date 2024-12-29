@@ -491,7 +491,7 @@ if ($action === 'check_p2p_available') {
         Core_Page_Show::instance()->error(403);
     }
 
-    $amount = request()->get('amount', 0);
+    $amount = (float)request()->get('amount', 0);
     $dateFrom = \Carbon\Carbon::now()->startOfMonth();
     $dateTo = \Carbon\Carbon::now()->endOfMonth();
 
